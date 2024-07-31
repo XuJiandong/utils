@@ -15,6 +15,15 @@ pub struct Suite {
     pub notes: std::collections::HashMap<String, String>,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct SuiteV1 {
+    pub algorithm: String,
+    #[serde(rename = "generatorVersion")]
+    pub generator_version: String,
+    #[serde(rename = "numberOfTests")]
+    pub number_of_tests: i32,
+}
+
 /// `Group` represents the common elements of a testGroups object in a Wycheproof suite.
 /// Implementations should embed (using `#[serde(flatten)]`) Group in a struct that
 /// strongly types its list of cases.
@@ -106,9 +115,9 @@ pub fn case_result(case: &Case) -> u8 {
 }
 
 /// Retrieve Wycheproof test vectors from the given filename in a Wycheproof repo.
-pub fn data(wycheproof_dir: &str, filename: &str) -> Vec<u8> {
+pub fn data(wycheproof_dir: &str, filename: &str, v1: bool) -> Vec<u8> {
     let path = std::path::Path::new(&wycheproof_dir)
-        .join("testvectors")
+        .join(if v1 { "testvectors_v1" } else { "testvectors" })
         .join(filename);
     std::fs::read(&path)
         .unwrap_or_else(|_| panic!("Test vector file {} not found at {:?}", filename, path))
@@ -116,6 +125,13 @@ pub fn data(wycheproof_dir: &str, filename: &str) -> Vec<u8> {
 
 /// Build a description for a test case in a suite
 pub fn description(suite: &Suite, case: &Case) -> String {
+    format!(
+        "{} case {} [{}] {}",
+        suite.algorithm, case.case_id, case.result, case.comment
+    )
+}
+
+pub fn description_v1(suite: &SuiteV1, case: &Case) -> String {
     format!(
         "{} case {} [{}] {}",
         suite.algorithm, case.case_id, case.result, case.comment

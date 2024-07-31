@@ -47,7 +47,7 @@ fn main() {
         .expect("Key size needs to be a number of bits");
     let out_path = args.get(4).expect("Provide path for output blobby file");
     let descriptions_path = args.get(5).expect("Provide path for descriptions file");
-
+    let mut v1 = false;
     let algo = match algorithm.as_str() {
         "AES-GCM" => Algorithm {
             file: "aes_gcm_test.json",
@@ -129,6 +129,13 @@ fn main() {
             file: "ecdsa_secp256k1_sha256_p1363_test.json",
             generator: ecdsa::generator,
         },
+        "secp256k1-bitcoin" => {
+            v1 = true;
+            Algorithm {
+                file: "ecdsa_secp256k1_sha256_bitcoin_test.json",
+                generator: ecdsa::generator_v1,
+            }
+        }
         "secp384r1" => Algorithm {
             file: "ecdsa_secp384r1_sha384_test.json",
             generator: ecdsa::generator,
@@ -140,7 +147,7 @@ fn main() {
         _ => panic!("Unrecognized algorithm '{}'", algorithm),
     };
 
-    let data = wycheproof::data(wycheproof_dir, algo.file);
+    let data = wycheproof::data(wycheproof_dir, algo.file, v1);
 
     let infos = (algo.generator)(&data, algorithm, key_size);
     println!("Emitting {} test cases", infos.len());
